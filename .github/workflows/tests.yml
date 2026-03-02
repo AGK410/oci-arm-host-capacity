@@ -1,41 +1,16 @@
-name: Tests
-
-on:
-  push:
-    branches: [ main ]
-  schedule:
-    - cron: '*/5 * * * *'
-
-jobs:
-  tests:
-    runs-on: ubuntu-latest
-    name: integration-tests (PHP 8.3)
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-      - name: Install dependencies
-        run: composer update --prefer-dist --no-progress
-      - name: Create OCI Key File
-        run: |
-          mkdir -p ~/.oci
-          echo "${{ secrets.OCI_PRIVATE_KEY }}" > ~/.oci/key.pem
-          chmod 600 ~/.oci/key.pem
-      - name: Run Hunt
-        run: vendor/bin/phpunit --color tests/
-        env:
-          OCI_REGION: eu-frankfurt-1
-          OCI_USER_ID: ${{ secrets.OCI_USER_ID }}
-          OCI_TENANCY_ID: ${{ secrets.OCI_TENANCY_ID }}
-          OCI_KEY_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
-          OCI_PRIVATE_KEY_FILENAME: /home/runner/.oci/key.pem
-          OCI_SUBNET_ID: ${{ secrets.OCI_SUBNET_ID }}
-          OCI_IMAGE_ID: ${{ secrets.OCI_IMAGE_ID }}
-          OCI_SSH_PUBLIC_KEY: ${{ secrets.OCI_SSH_PUBLIC_KEY }}
-          OCI_OCPUS: 4
-          OCI_MEMORY_IN_GBS: 24
-          OCI_SHAPE: VM.Standard.A1.Flex
-          OCI_MAX_INSTANCES: 1
-          OCI_AVAILABILITY_DOMAIN: $(oci iam availability-domain list --query "data[0].name" --raw-output)
+- name: Run Hunt
+  run: vendor/bin/phpunit --color --exclude-group integration tests/
+  env:
+    OCI_REGION: eu-frankfurt-1
+    OCI_USER_ID: ${{ secrets.OCI_USER_ID }}
+    OCI_TENANCY_ID: ${{ secrets.OCI_TENANCY_ID }}
+    OCI_KEY_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
+    OCI_PRIVATE_KEY_FILENAME: /home/runner/.oci/key.pem
+    OCI_SUBNET_ID: ${{ secrets.OCI_SUBNET_ID }}
+    OCI_IMAGE_ID: ${{ secrets.OCI_IMAGE_ID }}
+    OCI_SSH_PUBLIC_KEY: ${{ secrets.OCI_SSH_PUBLIC_KEY }}
+    OCI_OCPUS: 4
+    OCI_MEMORY_IN_GBS: 24
+    OCI_SHAPE: VM.Standard.A1.Flex
+    OCI_MAX_INSTANCES: 1
+    OCI_AVAILABILITY_DOMAIN: eu-frankfurt-1-AD-1   # <-- FIXED
