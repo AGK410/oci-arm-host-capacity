@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
   schedule:
     - cron: '*/5 * * * *'
 
@@ -25,24 +22,8 @@ jobs:
         with:
           php-version: ${{ matrix.php-versions }}
 
-      - name: Validate composer.json and composer.lock
-        run: composer validate
-
-      - name: Get Composer Cache Directory
-        id: composer-cache
-        run: |
-          echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
-
-      - uses: actions/cache@v4
-        with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-${{ matrix.php-version }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ matrix.php-version }}-composer-
-
       - name: Install dependencies
-        run: |
-          composer update --prefer-dist --no-progress
+        run: composer update --prefer-dist --no-progress
 
       - name: Create OCI Key File
         run: |
@@ -50,7 +31,7 @@ jobs:
           echo "${{ secrets.OCI_PRIVATE_KEY }}" > ~/.oci/key.pem
           chmod 600 ~/.oci/key.pem
 
-      - name: Run test suite
+      - name: Run Hunt
         run: |
           vendor/bin/phpunit --color tests/
         env:
@@ -59,13 +40,8 @@ jobs:
           OCI_TENANCY_ID: ${{ secrets.OCI_TENANCY_ID }}
           OCI_KEY_FINGERPRINT: ${{ secrets.OCI_KEY_FINGERPRINT }}
           OCI_PRIVATE_KEY_FILENAME: /home/runner/.oci/key.pem
-          OCI_AVAILABILITY_DOMAIN: ${{ secrets.OCI_AVAILABILITY_DOMAIN }}
           OCI_SUBNET_ID: ${{ secrets.OCI_SUBNET_ID }}
           OCI_IMAGE_ID: ${{ secrets.OCI_IMAGE_ID }}
           OCI_OCPUS: 4
           OCI_MEMORY_IN_GBS: 24
-          OCI_SHAPE: VM.Standard.A1.Flex
           OCI_MAX_INSTANCES: 1
-          OCI_SSH_PUBLIC_KEY: ${{ secrets.OCI_SSH_PUBLIC_KEY }}
-          TELEGRAM_USER_ID: ${{ secrets.TELEGRAM_USER_ID }}
-          TELEGRAM_BOT_API_KEY: ${{ secrets.TELEGRAM_BOT_API_KEY }}
